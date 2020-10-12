@@ -1,0 +1,60 @@
+---
+- name: maria db install
+  hosts: db
+  become: yes
+
+  tasks:
+    - name: check file the mariadb repository
+      stat: 
+        path: "/etc/yum.repo.d/mariadb.repo"
+      register: mariadb_repo_result
+
+    - name: MariaDB setup with specified version "{{ mariadb_version }}"
+      shell: curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --mariadb-server-version=mariadb-{{ mariadb_version }}
+      when: mariadb_repo_result.stat.exists == false
+      vars: 
+        mariadb_version: "10.1"
+
+    - name: install mariadb components
+      yum:
+        name: "{{ Components }}"
+        state: present
+      vars:
+        Components:
+          - mariadb-server
+          - MySQL-python
+
+    - name: start mariadb
+      service:
+        name: mariadb
+        state: restarted
+        enabled: yes
+
+    - name: check install mysql-python
+      shell: "find / -type d -name *MySQL-python*"
+      check_mode: no
+      register: mysql_python_result
+
+    - name: create db wordpress
+      mysql_db:
+        name: wordpress
+        state: present
+      when: mysql_python_result.stdout != ""
+
+    - name: create user:wordpress
+      no_log: true
+      mysql_user:
+        user: "wordpress"
+        password: "password"
+        priv: 'wordpress.*:ALL,GRANT'
+        state: present
+        host: "{{ connection_sorce_ip }}"
+      when: mysql_python_result.stdout != ""
+      vars:
+        connection_sorce_ip: 192.168.16.18
+
+# 参考：https://paihu.hatenablog.com/entry/2018/12/02/000029
+# 参考：https://docs.ansible.com/ansible/2.3/mysql_user_module.html
+# 参考：https://サーバー構築と設定.com/?p=3255
+# 参考: https://qiita.com/tech31/items/97b94fed3192b09ac5a9
+# mysqluser の　hostは接続元のアドレスを指定するこの場合は、web >> db であるため、web ip address
