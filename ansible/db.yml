@@ -51,7 +51,7 @@
         host: "{{ connection_sorce_ip }}"
       when: mysql_python_result.stdout != ""
       vars:
-        connection_sorce_ip: 192.168.16.18
+        connection_sorce_ip: 192.168.16.12
 
 # 参考：https://paihu.hatenablog.com/entry/2018/12/02/000029
 # 参考：https://docs.ansible.com/ansible/2.3/mysql_user_module.html
