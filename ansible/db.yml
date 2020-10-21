@@ -44,7 +44,7 @@
     - name: create user:wordpress
       no_log: true
       mysql_user:
-        user: "wordpress"
+        user: "web_user"
         password: "password"
         priv: 'wordpress.*:ALL,GRANT'
         state: present
